@@ -207,33 +207,33 @@
         <!-- LEFT SIDEBAR - Timeline -->
         <div class="col-lg-3">
             <div class="mb-3">
-                <h4 class="welcome-text">Good {{ 'Morning' if now().hour < 12 else ('Afternoon' if now().hour < 17
-                        else 'Evening' ) }}</h4>
-                        <p class="welcome-sub mb-0">{{ appointments|length }} appointment{{ 's' if appointments|length
-                            != 1 else '' }} today</p>
+                <h4 class="welcome-text" id="welcomeGreeting">Good Day</h4>
+                <p class="welcome-sub mb-0" id="appointmentCount">Loading...</p>
             </div>
 
             <div class="timeline-sidebar">
                 <h6 class="text-muted mb-2" style="font-size: 0.8rem;"><i class="fas fa-calendar-day me-1"></i>Today's
                     Schedule</h6>
-                {% if appointments %}
-                {% for appt in appointments[:6] %}
-                <div class="timeline-item {{ appt.status }}">
-                    <div>
-                        <div class="timeline-time">{{ appt.slot.start_time.strftime('%I:%M %p') }}</div>
-                        <div class="timeline-name">
-                            <a href="{{ url_for('doctor.appointment_details', id=appt.id) }}">{{ appt.patient.name
-                                }}</a>
+                <div id="appointmentsList">
+                    {% if appointments %}
+                    {% for appt in appointments %}
+                    <div class="timeline-item {{ appt.status }}">
+                        <div>
+                            <div class="timeline-time">{{ appt.time_display }}</div>
+                            <div class="timeline-name">
+                                <a href="{{ url_for('doctor.appointment_details', id=appt.id) }}">{{ appt.patient.name
+                                    }}</a>
+                            </div>
                         </div>
                     </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-check d-block"></i>
+                        <p>No appointments today</p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endfor %}
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-calendar-check d-block"></i>
-                    <p>No appointments today</p>
-                </div>
-                {% endif %}
             </div>
         </div>
 
@@ -272,7 +272,7 @@
                     <div class="stat-card">
                         <div class="stat-icon amber"><i class="fas fa-rupee-sign"></i></div>
                         <div>
-                            <div class="stat-value">₹{{ total_revenue|int|default(0) }}</div>
+                            <div class="stat-value">₹{{ total_revenue }}</div>
                             <div class="stat-label">Revenue</div>
                         </div>
                     </div>
@@ -301,7 +301,7 @@
                     <div class="patients-table">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="chart-title mb-0">Patients</div>
-                            <input type="text" class="search-box" placeholder=" Search" id="patientSearch">
+                            <input type="text" class="search-box" placeholder="Search" id="patientSearch">
                         </div>
                         <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
                             <table class="table table-sm" id="patientsTable">
@@ -314,19 +314,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for patient in recent_patients[:5] %}
+                                    {% if recent_patients %}
+                                    {% for patient in recent_patients %}
                                     <tr>
                                         <td><a href="{{ url_for('doctor.view_patient_history', patient_id=patient.id) }}"
                                                 class="patient-name">{{ patient.name }}</a></td>
-                                        <td>{{ patient.dob.strftime('%d-%b-%y') if patient.dob else 'N/A' }}</td>
+                                        <td>{{ patient.dob_display }}</td>
                                         <td>{{ patient.phone }}</td>
                                         <td>{{ patient.last_visit }}</td>
                                     </tr>
+                                    {% endfor %}
                                     {% else %}
                                     <tr>
                                         <td colspan="4" class="text-center text-muted py-3">No patients yet</td>
                                     </tr>
-                                    {% endfor %}
+                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
@@ -346,22 +348,26 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Hidden element to pass data from Python to JavaScript safely -->
-<div id="chart-data"
-    data-monthly='[{% for e in monthly_earnings %}{{ e }}{% if not loop.last %},{% endif %}{% endfor %}]'
-    data-weekly='[{% for e in weekly_earnings %}{{ e }}{% if not loop.last %},{% endif %}{% endfor %}]'
-    style="display:none;"></div>
-
 <script>
-    // Get data from data attributes
-    const chartDataEl = document.getElementById('chart-data');
-    const monthlyEarningsData = JSON.parse(chartDataEl.getAttribute('data-monthly') || '[0,0,0,0,0,0,0,0,0,0,0,0]');
-    const weeklyEarningsData = JSON.parse(chartDataEl.getAttribute('data-weekly') || '[0,0,0,0,0,0,0]');
+    // Set greeting based on time of day
+    var hour = new Date().getHours();
+    var greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+    document.getElementById('welcomeGreeting').textContent = greeting;
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().getMonth();
-    const monthLabels = [];
-    for (let i = 11; i >= 0; i--) {
+    // Set appointment count
+    var appointmentCount = {{ appointment_count }};
+    var countText = appointmentCount + ' appointment' + (appointmentCount !== 1 ? 's' : '') + ' today';
+    document.getElementById('appointmentCount').textContent = countText;
+
+    // Static chart data (no Jinja needed)
+    var monthlyData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    var weeklyData = [0, 0, 0, 0, 0, 0, 0];
+
+    // Chart labels
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var currentMonth = new Date().getMonth();
+    var monthLabels = [];
+    for (var i = 11; i >= 0; i--) {
         monthLabels.push(months[(currentMonth - i + 12) % 12]);
     }
 
@@ -370,7 +376,7 @@
         data: {
             labels: monthLabels,
             datasets: [{
-                data: monthlyEarningsData,
+                data: monthlyData,
                 backgroundColor: 'rgba(59, 130, 246, 0.8)',
                 borderRadius: 4
             }]
@@ -385,10 +391,10 @@
         }
     });
 
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const todayIdx = new Date().getDay();
-    const weekLabels = [];
-    for (let i = 6; i >= 0; i--) {
+    var weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    var todayIdx = new Date().getDay();
+    var weekLabels = [];
+    for (var i = 6; i >= 0; i--) {
         weekLabels.push(weekDays[(todayIdx - i + 7) % 7]);
     }
 
@@ -397,7 +403,7 @@
         data: {
             labels: weekLabels,
             datasets: [{
-                data: weeklyEarningsData,
+                data: weeklyData,
                 borderColor: '#22c55e',
                 backgroundColor: 'rgba(34, 197, 94, 0.1)',
                 fill: true,
@@ -420,7 +426,7 @@
         data: {
             labels: ['Cash', 'UPI', 'Card'],
             datasets: [{
-                data: [180, 75, 120],
+                data: [0, 0, 0],
                 backgroundColor: ['#22c55e', '#f59e0b', '#3b82f6'],
                 borderRadius: 4
             }]
@@ -436,10 +442,11 @@
     });
 
     document.getElementById('patientSearch').addEventListener('input', function (e) {
-        const query = e.target.value.toLowerCase();
-        document.querySelectorAll('#patientsTable tbody tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
-        });
+        var query = e.target.value.toLowerCase();
+        var rows = document.querySelectorAll('#patientsTable tbody tr');
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].style.display = rows[i].textContent.toLowerCase().includes(query) ? '' : 'none';
+        }
     });
 </script>
 {% endblock %}
