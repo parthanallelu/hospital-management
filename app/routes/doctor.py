@@ -12,80 +12,101 @@ def dashboard():
     if current_user.role != 'doctor':
         return redirect(url_for('auth.login'))
     
-    doctor_profile = current_user.doctor_profile
-    today = datetime.now(timezone.utc).date()
-    
-    # Get all appointments for this doctor
-    all_appointments = doctor_profile.appointments.all()
-    
-    # Today's appointments (for timeline)
-    today_appointments = [a for a in all_appointments if a.slot and a.slot.start_time.date() == today]
-    today_appointments.sort(key=lambda x: x.slot.start_time)
-    
-    # Statistics
-    total_appointments = len(all_appointments)
-    completed_visits = len([a for a in all_appointments if a.status == 'completed'])
-    
-    # Unique patients
-    unique_patient_ids = set(a.patient_id for a in all_appointments)
-    total_patients = len(unique_patient_ids)
-    
-    # New patients this month
-    month_start = today.replace(day=1)
-    new_patients_this_month = len([a for a in all_appointments 
-        if a.created_at and a.created_at.date() >= month_start])
-    
-    # Revenue (consultation fees * completed appointments)
-    consultation_fee = doctor_profile.consultation_fees or 500
-    total_revenue = completed_visits * consultation_fee
-    
-    # Recent patients for table
-    recent_patients = []
-    seen_ids = set()
-    for appt in sorted(all_appointments, key=lambda x: x.created_at or datetime.min, reverse=True):
-        if appt.patient_id not in seen_ids and appt.patient:
-            seen_ids.add(appt.patient_id)
-            recent_patients.append({
-                'name': appt.patient.name,
-                'dob': appt.patient.dob,
-                'phone': appt.patient.phone or 'N/A',
-                'last_visit': appt.created_at.strftime('%d-%b-%Y') if appt.created_at else 'N/A',
-                'id': appt.patient_id
-            })
-            if len(recent_patients) >= 10:
-                break
-    
-    # Monthly earnings for chart (last 12 months)
-    monthly_earnings = []
-    for i in range(11, -1, -1):
-        month = (today.month - i - 1) % 12 + 1
-        year = today.year - (1 if today.month - i <= 0 else 0)
-        month_appts = [a for a in all_appointments 
-            if a.status == 'completed' and a.created_at 
-            and a.created_at.month == month and a.created_at.year == year]
-        monthly_earnings.append(len(month_appts) * consultation_fee)
-    
-    # Weekly earnings (last 7 days)
-    weekly_earnings = []
-    for i in range(6, -1, -1):
-        day = today - timedelta(days=i)
-        day_appts = [a for a in all_appointments 
-            if a.status == 'completed' and a.created_at 
-            and a.created_at.date() == day]
-        weekly_earnings.append(len(day_appts) * consultation_fee)
-    
-    return render_template('doctor/dashboard.html', 
-        title='Doctor Dashboard',
-        appointments=today_appointments,
-        total_patients=total_patients,
-        new_patients=new_patients_this_month,
-        total_appointments=total_appointments,
-        completed_visits=completed_visits,
-        total_revenue=total_revenue,
-        recent_patients=recent_patients,
-        monthly_earnings=monthly_earnings,
-        weekly_earnings=weekly_earnings
-    )
+    try:
+        doctor_profile = current_user.doctor_profile
+        if not doctor_profile:
+            flash("Error: Doctor profile not found. Please contact support.")
+            return redirect(url_for('auth.logout'))
+
+        today = datetime.now(timezone.utc).date()
+        
+        # Get all appointments for this doctor
+        all_appointments = doctor_profile.appointments.all()
+        
+        # Today's appointments (for timeline)
+        today_appointments = [a for a in all_appointments if a.slot and a.slot.start_time.date() == today]
+        today_appointments.sort(key=lambda x: x.slot.start_time)
+        
+        # Statistics
+        total_appointments = len(all_appointments)
+        completed_visits = len([a for a in all_appointments if a.status == 'completed'])
+        
+        # Unique patients
+        unique_patient_ids = set(a.patient_id for a in all_appointments)
+        total_patients = len(unique_patient_ids)
+        
+        # New patients this month
+        month_start = today.replace(day=1)
+        new_patients_this_month = len([a for a in all_appointments 
+            if a.created_at and a.created_at.date() >= month_start])
+        
+        # Revenue (consultation fees * completed appointments)
+        consultation_fee = doctor_profile.consultation_fees or 500
+        total_revenue = completed_visits * consultation_fee
+        
+        # Recent patients for table
+        recent_patients = []
+        seen_ids = set()
+        for appt in sorted(all_appointments, key=lambda x: x.created_at or datetime.min, reverse=True):
+            if appt.patient_id not in seen_ids and appt.patient:
+                seen_ids.add(appt.patient_id)
+                recent_patients.append({
+                    'name': appt.patient.name,
+                    'dob': appt.patient.dob,
+                    'phone': appt.patient.phone or 'N/A',
+                    'last_visit': appt.created_at.strftime('%d-%b-%Y') if appt.created_at else 'N/A',
+                    'id': appt.patient_id
+                })
+                if len(recent_patients) >= 10:
+                    break
+        
+        # Monthly earnings for chart (last 12 months)
+        monthly_earnings = []
+        for i in range(11, -1, -1):
+            month = (today.month - i - 1) % 12 + 1
+            year = today.year - (1 if today.month - i <= 0 else 0)
+            month_appts = [a for a in all_appointments 
+                if a.status == 'completed' and a.created_at 
+                and a.created_at.month == month and a.created_at.year == year]
+            monthly_earnings.append(len(month_appts) * consultation_fee)
+        
+        # Weekly earnings (last 7 days)
+        weekly_earnings = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            day_appts = [a for a in all_appointments 
+                if a.status == 'completed' and a.created_at 
+                and a.created_at.date() == day]
+            weekly_earnings.append(len(day_appts) * consultation_fee)
+        
+        return render_template('doctor/dashboard.html', 
+            title='Doctor Dashboard',
+            appointments=today_appointments,
+            total_patients=total_patients,
+            new_patients=new_patients_this_month,
+            total_appointments=total_appointments,
+            completed_visits=completed_visits,
+            total_revenue=total_revenue,
+            recent_patients=recent_patients,
+            monthly_earnings=monthly_earnings,
+            weekly_earnings=weekly_earnings
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc() # Print to Render logs
+        flash(f"Dashboard Error: {str(e)}")
+        return render_template('doctor/dashboard.html', 
+            title='Doctor Dashboard',
+            appointments=[],
+            total_patients=0,
+            new_patients=0,
+            total_appointments=0,
+            completed_visits=0,
+            total_revenue=0,
+            recent_patients=[],
+            monthly_earnings=[],
+            weekly_earnings=[]
+        )
 
 @doctor_bp.route('/profile')
 @login_required
