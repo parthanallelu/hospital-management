@@ -272,7 +272,7 @@
                     <div class="stat-card">
                         <div class="stat-icon amber"><i class="fas fa-rupee-sign"></i></div>
                         <div>
-                            <div class="stat-value">₹{{ '{:,.0f}'.format(total_revenue) }}</div>
+                            <div class="stat-value">₹{{ total_revenue|int|default(0) }}</div>
                             <div class="stat-label">Revenue</div>
                         </div>
                     </div>
