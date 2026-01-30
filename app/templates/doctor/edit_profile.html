@@ -92,11 +92,16 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Hidden element to pass location data safely -->
+<div id="location-data" data-lat="{{ profile.lat if profile.lat else 18.5204 }}"
+    data-lng="{{ profile.lng if profile.lng else 73.8567 }}" style="display:none;"></div>
+
 <script>
     // Map Logic
-    // Ensure we have valid default numbers if profile data is missing
-    var lat = {{ profile.lat if profile.lat else 18.5204 }};
-    var lng = {{ profile.lng if profile.lng else 73.8567 }};
+    // Get location from data attributes
+    var locationData = document.getElementById('location-data');
+    var lat = parseFloat(locationData.getAttribute('data-lat')) || 18.5204;
+    var lng = parseFloat(locationData.getAttribute('data-lng')) || 73.8567;
 
     // Initialize Map
     var map = L.map('mapPicker').setView([lat, lng], 13);

@@ -37,6 +37,8 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('patient.dashboard') }}">Dashboard</a>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('patient.profile') }}">My Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('patient.find_doctor') }}">Find Doctor</a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('patient.history') }}">History</a></li>
                     {% elif current_user.role == 'doctor' %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('doctor.dashboard') }}">Dashboard</a></li>

@@ -5,5 +5,3 @@ flask-migrate
 email_validator
 requests
 authlib
-python-dotenv
-gunicorn
