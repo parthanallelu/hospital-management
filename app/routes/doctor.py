@@ -95,18 +95,16 @@ def dashboard():
         import traceback
         traceback.print_exc() # Print to Render logs
         flash(f"Dashboard Error: {str(e)}")
-        return render_template('doctor/dashboard.html', 
-            title='Doctor Dashboard',
-            appointments=[],
-            total_patients=0,
-            new_patients=0,
-            total_appointments=0,
-            completed_visits=0,
-            total_revenue=0,
-            recent_patients=[],
-            monthly_earnings=[],
-            weekly_earnings=[]
-        )
+        # Return a simple error page to avoid recursive crashes if the template is broken
+        return f"""
+        <div style="font-family: sans-serif; padding: 2rem; text-align: center;">
+            <h2 style="color: #e11d48;">Dashboard Error</h2>
+            <p>Something went wrong while loading your dashboard.</p>
+            <p style="background: #f1f5f9; padding: 1rem; border-radius: 8px; display: inline-block; font-family: monospace;">{str(e)}</p>
+            <br><br>
+            <a href="{url_for('auth.logout')}" style="color: #2563eb; text-decoration: underline;">Logout & Try Again</a>
+        </div>
+        """
 
 @doctor_bp.route('/profile')
 @login_required
