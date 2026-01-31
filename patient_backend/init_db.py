@@ -1,6 +1,0 @@
-print("Database initialization is now handled by manage_data.py")
-print("Run the following commands:")
-print("  export FLASK_APP=manage_data.py")
-print("  flask init-roles")
-print("  flask seed-inventory")
-print("  flask seed-demo")

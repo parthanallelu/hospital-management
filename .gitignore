@@ -62,3 +62,9 @@ patient_app/.flutter-plugins-dependencies
 
 # Temporary files
 tempCodeRunnerFile.py
+
+# Duplicate/unnecessary folders (prevent re-adding)
+patient_backend/
+patient_app/
+MEDICAL BACK AND FRONT END/
+__MACOSX/
