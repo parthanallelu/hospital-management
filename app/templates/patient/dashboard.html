@@ -301,16 +301,15 @@
     <div class="welcome-card mb-3">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h2>Good {{ 'Morning' if now().hour < 12 else ('Afternoon' if now().hour < 17 else 'Evening' ) }}, {{
-                        profile.name }}! 👋</h2>
-                        <p>
-                            {% if next_appointment %}
-                            Next: <strong>Dr. {{ next_appointment.doctor.name }}</strong> on {{
-                            next_appointment.slot.start_time.strftime('%d %b, %I:%M %p') }}
-                            {% else %}
-                            No upcoming appointments. Stay healthy!
-                            {% endif %}
-                        </p>
+                <h2>Welcome, {{ profile.name }}! 👋</h2>
+                <p>
+                    {% if next_appointment %}
+                    Next: <strong>Dr. {{ next_appointment.doctor.name }}</strong> on {{
+                    next_appointment.slot.start_time.strftime('%d %b, %I:%M %p') }}
+                    {% else %}
+                    No upcoming appointments. Stay healthy!
+                    {% endif %}
+                </p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ url_for('patient.find_doctor') }}" class="btn btn-light px-3">

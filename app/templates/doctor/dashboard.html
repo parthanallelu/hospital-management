@@ -348,14 +348,14 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script data-appointment-count="{{ appointment_count|default(0) }}">
     // Set greeting based on time of day
     var hour = new Date().getHours();
     var greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
     document.getElementById('welcomeGreeting').textContent = greeting;
 
-    // Set appointment count
-    var appointmentCount = {{ appointment_count }};
+    // Set appointment count - read from data attribute
+    var appointmentCount = parseInt(document.currentScript.dataset.appointmentCount) || 0;
     var countText = appointmentCount + ' appointment' + (appointmentCount !== 1 ? 's' : '') + ' today';
     document.getElementById('appointmentCount').textContent = countText;
 
